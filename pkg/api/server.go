@@ -3,20 +3,25 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/sid-sun/rptat/cmd/config"
-	"github.com/sid-sun/rptat/pkg/api/metrics"
-	"github.com/sid-sun/rptat/pkg/api/proxy"
-	"go.uber.org/zap"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/sid-sun/rptat/cmd/config"
+	"github.com/sid-sun/rptat/pkg/api/metrics"
+	"github.com/sid-sun/rptat/pkg/api/proxy"
+	"github.com/sid-sun/rptat/pkg/api/service"
+	"github.com/sid-sun/rptat/pkg/api/store"
+	"go.uber.org/zap"
 )
 
 // StartServer starts the api, inits all the requited submodules and routine for shutdown
 func StartServer(cfg config.Config, logger *zap.Logger) {
+	str := store.NewStore(cfg.StoreConfig, logger)
+	svc := service.NewService(&str, logger)
 
-	mtr, sync, err := metrics.NewMetrics()
+	mtr, sync, err := metrics.NewMetrics(&svc)
 	if err != nil {
 		panic(err)
 	}
@@ -38,8 +43,7 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 		}
 	}()
 
-	var shutdownGracefully bool
-	go mtr.Sync(&shutdownGracefully)
+	go mtr.Sync()
 	gracefulShutdown(srv, logger, sync)
 }
 
