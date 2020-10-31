@@ -98,17 +98,17 @@ func (m *metricsService) Commit() error {
 	return nil
 }
 
-func (m *metricsService) getCurrentMetrics() (*metrics, error) {
+func (m *metricsService) loadMetricsFromStore() (*metrics, error) {
 	raw, err := (*m.str).Read()
 	if err != nil {
-		m.lgr.Sugar().Errorf("[Service] [getCurrentMetrics] [Read] %v", err)
+		m.lgr.Sugar().Errorf("[Service] [loadMetricsFromStore] [Read] %v", err)
 		return nil, err
 	}
 
 	var currentMetrics metrics
 	err = json.Unmarshal(raw, &currentMetrics)
 	if err != nil {
-		m.lgr.Sugar().Errorf("[Service] [getCurrentMetrics] [Unmarshal] %v", err)
+		m.lgr.Sugar().Errorf("[Service] [loadMetricsFromStore] [Unmarshal] %v", err)
 		return nil, err
 	}
 
@@ -123,7 +123,7 @@ func NewService(str *store.Store, lgr *zap.Logger) (Service, error) {
 	}
 
 	var err error
-	ms.currentMetrics, err = ms.getCurrentMetrics()
+	ms.currentMetrics, err = ms.loadMetricsFromStore()
 	if err != nil {
 		return nil, err
 	}
