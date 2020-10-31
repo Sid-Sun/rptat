@@ -25,7 +25,7 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 		panic(err)
 	}
 
-	mtr, sync, err := metrics.NewMetrics(&svc)
+	mtr, sync, err := metrics.NewMetrics(&svc, cfg.MetricsConfig)
 	if err != nil {
 		panic(err)
 	}

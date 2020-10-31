@@ -7,6 +7,7 @@ import (
 	"github.com/nsnikhil/go-datastructures/queue"
 	"github.com/sid-sun/rptat/app/contract"
 	"github.com/sid-sun/rptat/app/service"
+	"github.com/sid-sun/rptat/cmd/config"
 	"go.uber.org/zap"
 )
 
@@ -22,6 +23,8 @@ type (
 
 		request  instance
 		response instance
+
+		maxPending int
 	}
 	instance struct {
 		lock  sync.Mutex
@@ -33,7 +36,7 @@ type (
 // It returns the Metrics object for registering new requests
 // And A sync method for syncing current metrics with service
 // An error is returned if initialization of requirements fail
-func NewMetrics(svc *service.Service) (*Metrics, *chan bool, error) {
+func NewMetrics(svc *service.Service, cfg config.MetricsConfig) (*Metrics, *chan bool, error) {
 	reqQ, err := queue.NewLinkedQueue()
 	if err != nil {
 		return nil, nil, err
@@ -54,6 +57,7 @@ func NewMetrics(svc *service.Service) (*Metrics, *chan bool, error) {
 		},
 		syncChan: &c,
 		svc:      svc,
+		maxPending: cfg.GetMinForSync(),
 	}, &c, nil
 }
 
@@ -72,7 +76,7 @@ func (m *Metrics) IncrementRequestCount(path string) error {
 	m.lock.Lock()
 
 	m.total++
-	if m.total >= 30 {
+	if m.total >= m.maxPending {
 		*m.syncChan <- true
 		m.total = 0
 	}
@@ -96,7 +100,7 @@ func (m *Metrics) IncrementResponseCount(path string, code int) error {
 	m.lock.Lock()
 
 	m.total++
-	if m.total >= 30 {
+	if m.total >= m.maxPending {
 		*m.syncChan <- true
 		m.total = 0
 	}

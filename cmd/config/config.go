@@ -7,10 +7,11 @@ import (
 
 // Config contains all the necessary configurations
 type Config struct {
-	App         appConfig
-	environment string
-	StoreConfig StoreConfig
-	ProxyConfig ProxyConfig
+	App           appConfig
+	environment   string
+	StoreConfig   StoreConfig
+	ProxyConfig   ProxyConfig
+	MetricsConfig MetricsConfig
 }
 
 // GetEnv returns the current environment
@@ -45,6 +46,9 @@ func Load() Config {
 				host:     viper.GetString("PROXY_SERVE_HOST"),
 				port:     viper.GetInt("PROXY_SERVE_PORT"),
 			},
+		},
+		MetricsConfig: MetricsConfig{
+			minForSync: viper.GetInt("METRICS_MAX_PENDING"),
 		},
 	}
 }
