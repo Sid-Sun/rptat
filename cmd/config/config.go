@@ -48,7 +48,7 @@ func Load() Config {
 			},
 		},
 		MetricsConfig: MetricsConfig{
-			minForSync: viper.GetInt("METRICS_MAX_PENDING"),
+			minForSync: viper.GetUint("METRICS_MAX_PENDING"),
 		},
 	}
 }

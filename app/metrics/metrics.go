@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	SyncShutdown = false
-	SyncNow      = true
+	SyncShutdown = true
+	SyncNow      = false
 )
 
 type (
@@ -22,14 +22,15 @@ type (
 		svc *service.Service
 
 		lock     sync.Mutex
-		syncChan *chan bool
+		syncChan chan bool
+		ackChan  chan bool
 		lgr      *zap.Logger
-		total    int
+		total    uint
 
 		request  instance
 		response instance
 
-		maxPending int
+		maxPending uint
 	}
 	instance struct {
 		lock  sync.Mutex
@@ -41,29 +42,31 @@ type (
 // It returns the Metrics object for registering new requests
 // And A sync method for syncing current metrics with service
 // An error is returned if initialization of requirements fail
-func NewMetrics(svc *service.Service, cfg config.MetricsConfig) (*Metrics, *chan bool, error) {
+func NewMetrics(svc *service.Service, cfg config.MetricsConfig) (*Metrics, error) {
 	reqQ, err := queue.NewLinkedQueue()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	resQ, err := queue.NewLinkedQueue()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	c := make(chan bool)
-	return &Metrics{
+	m := &Metrics{
 		request: instance{
 			queue: reqQ,
 		},
 		response: instance{
 			queue: resQ,
 		},
-		syncChan:   &c,
+		syncChan:   make(chan bool),
+		ackChan:    make(chan bool),
 		svc:        svc,
 		maxPending: cfg.GetMinForSync(),
-	}, &c, nil
+	}
+	go m.sync()
+	return m, nil
 }
 
 // IncrementRequestCount registers a new request at the specified path
@@ -78,15 +81,11 @@ func (m *Metrics) IncrementRequestCount(path string) error {
 	}
 
 	m.request.lock.Unlock()
-	m.lock.Lock()
 
-	m.total++
-	if m.total >= m.maxPending {
-		*m.syncChan <- SyncNow
-		m.total = 0
+	if m.maxPending != 0 {
+		m.syncWithIncrement()
 	}
 
-	m.lock.Unlock()
 	return nil
 }
 
@@ -97,27 +96,50 @@ func (m *Metrics) IncrementResponseCount(path string, code int) error {
 	err := m.response.queue.Add(contract.Response{Path: path, Code: code, Date: time.Now().Format("01-02-2006")})
 	if err != nil {
 		m.lgr.Sugar().Errorf("[Metrics] [IncrementResponseCount] [Add] %v", err)
-		m.request.lock.Unlock()
+		m.response.lock.Unlock()
 		return err
 	}
 
 	m.response.lock.Unlock()
-	m.lock.Lock()
 
-	m.total++
-	if m.total >= m.maxPending {
-		*m.syncChan <- SyncNow
-		m.total = 0
+	if m.maxPending != 0 {
+		m.syncWithIncrement()
 	}
 
-	m.lock.Unlock()
 	return nil
 }
 
-// Sync syncs the local records with service
-func (m *Metrics) Sync() {
+// syncWithIncrement increments total count and syncs metrics
+// syncWithIncrement is a BLOCKING function
+func (m *Metrics) syncWithIncrement() {
+	// Increment
+	m.lock.Lock()
+	m.total++
+	if m.total >= m.maxPending {
+		m.lock.Unlock()
+		m.SyncNow()
+		return
+	}
+	m.lock.Unlock()
+}
+
+// SyncNow performs a *BLOCKING* sync of metrics to service
+func (m *Metrics) SyncNow() {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	m.syncChan <- SyncNow
+	m.total = 0
+
+	<-m.ackChan
+}
+
+// Sync is a blocking method (meant to be called in a routine)
+// which listens for sync calls from either SyncPeriodically, SyncNow or (syncWithIncrement indirectly)
+// and syncs current metrics with service then commits them to store via service
+func (m *Metrics) sync() {
 	for {
-		cont := <-*m.syncChan
+		cont := <-m.syncChan
 
 		reqMetrics := make(map[contract.Request]int)
 		var totalIncrement int
@@ -153,10 +175,25 @@ func (m *Metrics) Sync() {
 			m.lgr.Sugar().Errorf("[Metrics] [Sync] [Commit] %v", err)
 		}
 
-		if !cont {
-			// Send ack for sync
-			*m.syncChan <- true
+		// Acknowledge sync completion
+		m.ackChan <- true
+		// If SyncShutdown break
+		if cont == SyncShutdown {
+			// panic("Wow")
 			break
 		}
 	}
+}
+
+//SyncPeriodically starts a routine which syncs metrics at given duration
+func (m *Metrics) SyncPeriodically(d time.Duration) {
+	go func() {
+		ticker := time.NewTicker(d)
+		for {
+			select {
+			case <-ticker.C:
+				m.SyncNow()
+			}
+		}
+	}()
 }

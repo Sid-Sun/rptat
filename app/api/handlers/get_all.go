@@ -4,13 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/sid-sun/rptat/app/metrics"
 	"github.com/sid-sun/rptat/app/service"
 	"go.uber.org/zap"
 )
 
 // GetHandler handles all get data requests
-func GetHandler(svc *service.Service, lgr *zap.Logger) http.HandlerFunc {
+func GetHandler(svc *service.Service, mtr *metrics.Metrics, lgr *zap.Logger) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
+		mtr.SyncNow()
+
 		raw, err := json.Marshal((*svc).GetCurrentMetrics())
 		if err != nil {
 			lgr.Sugar().Errorf("[Handlers] [GetHandler] [Marshal]")

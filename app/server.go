@@ -3,12 +3,12 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/sid-sun/rptat/app/api/router"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	"github.com/sid-sun/rptat/app/api/router"
 	"github.com/sid-sun/rptat/app/metrics"
 	"github.com/sid-sun/rptat/app/proxy"
 	"github.com/sid-sun/rptat/app/service"
@@ -26,12 +26,11 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 		panic(err)
 	}
 
-	mtr, sync, err := metrics.NewMetrics(&svc, cfg.MetricsConfig)
+	mtr, err := metrics.NewMetrics(&svc, cfg.MetricsConfig)
 	if err != nil {
 		panic(err)
 	}
-	// Start routine for sync
-	go mtr.Sync()
+	go mtr.SyncPeriodically(time.Second * 30)
 
 	pxy, err := proxy.NewProxy(cfg.ProxyConfig, logger, mtr)
 	if err != nil {
@@ -50,7 +49,7 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 		}
 	}()
 
-	rtr := router.NewRouter(&svc, logger)
+	rtr := router.NewRouter(&svc, mtr, logger)
 	apiServer := &http.Server{Addr: cfg.App.Address(), Handler: rtr}
 
 	logger.Info(fmt.Sprintf("[StartServer] [API] Listening on %s", cfg.App.Address()))
@@ -61,10 +60,10 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 		}
 	}()
 
-	gracefulShutdown(apiServer, proxyServer, logger, sync)
+	gracefulShutdown(apiServer, proxyServer, logger, mtr)
 }
 
-func gracefulShutdown(apiServer, proxyServer *http.Server, logger *zap.Logger, syncMetrics *chan bool) {
+func gracefulShutdown(apiServer, proxyServer *http.Server, logger *zap.Logger, mtr *metrics.Metrics) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
@@ -86,7 +85,6 @@ func gracefulShutdown(apiServer, proxyServer *http.Server, logger *zap.Logger, s
 		}
 	}()
 
-	*syncMetrics <- metrics.SyncShutdown
-	// Wait for ack for sync completion
-	<-*syncMetrics
+	// Perform a blocking sync
+	mtr.SyncNow()
 }
