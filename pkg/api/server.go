@@ -26,14 +26,14 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 		panic(err)
 	}
 
-	pxy, err := proxy.NewProxy("http://localhost:8081", logger, mtr)
+	pxy, err := proxy.NewProxy(cfg.ProxyConfig, logger, mtr)
 	if err != nil {
 		panic(err)
 	}
 
 	http.HandleFunc("/", pxy.MetricsProxyHandler())
 
-	srv := &http.Server{Addr: cfg.App.Address()}
+	srv := &http.Server{Addr: cfg.ProxyConfig.GetListenAddress()}
 
 	logger.Info(fmt.Sprintf("[StartServer] Listening on %s", cfg.App.Address()))
 	go func() {

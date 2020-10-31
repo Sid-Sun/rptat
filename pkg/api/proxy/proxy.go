@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"github.com/sid-sun/rptat/cmd/config"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -16,12 +17,12 @@ type Proxy struct {
 	proxy *httputil.ReverseProxy
 }
 
-func NewProxy(target string, lgr *zap.Logger, mt *metrics.Metrics) (*Proxy, error) {
-	targetURL, err := url.Parse(target)
+func NewProxy(cfg config.ProxyConfig, lgr *zap.Logger, mt *metrics.Metrics) (*Proxy, error) {
+	serveURL, err := url.Parse(cfg.GetServeURL())
 	if err != nil {
 		return nil, err
 	}
-	p := httputil.NewSingleHostReverseProxy(targetURL)
+	p := httputil.NewSingleHostReverseProxy(serveURL)
 	p.Transport = &http.Transport{
 		MaxIdleConns:        50,
 		MaxIdleConnsPerHost: 50,
@@ -32,14 +33,12 @@ func NewProxy(target string, lgr *zap.Logger, mt *metrics.Metrics) (*Proxy, erro
 		lgr:   lgr,
 		mt:    mt,
 		proxy: p,
-		tgt:   targetURL,
+		tgt:   serveURL,
 	}, nil
 }
 
 func (p *Proxy) MetricsProxyHandler() func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
-		//lgr.Info("[Proxy] [attempt]")
-
 		go func() {
 			err := p.mt.IncrementRequestCount(req.URL.Path)
 			if err != nil {
@@ -48,8 +47,6 @@ func (p *Proxy) MetricsProxyHandler() func(res http.ResponseWriter, req *http.Re
 		}()
 
 		p.serveReverseProxy(res, req)
-
-		//lgr.Info("[Proxy] [success]")
 	}
 }
 

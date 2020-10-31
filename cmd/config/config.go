@@ -2,8 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/spf13/viper"
 )
 
@@ -12,6 +10,7 @@ type Config struct {
 	App         appConfig
 	environment string
 	StoreConfig StoreConfig
+	ProxyConfig ProxyConfig
 }
 
 // GetEnv returns the current environment
@@ -26,15 +25,26 @@ func Load() Config {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("./")
 
-	fmt.Println(os.Getenv("APP_ENV"))
+	fmt.Println(viper.GetString("APP_ENV"))
 	return Config{
-		environment: os.Getenv("APP_ENV"),
+		environment: viper.GetString("APP_ENV"),
 		App: appConfig{
-			port: os.Getenv("APP_PORT"),
+			port: viper.GetString("APP_PORT"),
 		},
 		StoreConfig: StoreConfig{
-			fileName:  os.Getenv("FILE_NAME"),
+			fileName:  viper.GetString("FILE_NAME"),
 			filePerms: viper.GetInt("FILE_PERMS"),
+		},
+		ProxyConfig: ProxyConfig{
+			listen: listenCfg{
+				host: viper.GetString("PROXY_LISTEN_HOST"),
+				port: viper.GetInt("PROXY_LISTEN_PORT"),
+			},
+			serve: serveCfg{
+				protocol: viper.GetString("PROXY_SERVE_PROTOCOL"),
+				host:     viper.GetString("PROXY_SERVE_HOST"),
+				port:     viper.GetInt("PROXY_SERVE_PORT"),
+			},
 		},
 	}
 }
