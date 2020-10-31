@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/sid-sun/rptat/app/api/router"
 	"github.com/sid-sun/rptat/app/metrics"
 	"github.com/sid-sun/rptat/app/proxy"
 	"github.com/sid-sun/rptat/app/service"
@@ -29,6 +30,8 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 	if err != nil {
 		panic(err)
 	}
+	// Start routine for sync
+	go mtr.Sync()
 
 	pxy, err := proxy.NewProxy(cfg.ProxyConfig, logger, mtr)
 	if err != nil {
@@ -37,21 +40,31 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 
 	http.HandleFunc("/", pxy.MetricsProxyHandler())
 
-	srv := &http.Server{Addr: cfg.ProxyConfig.GetListenAddress()}
+	proxyServer := &http.Server{Addr: cfg.ProxyConfig.GetListenAddress()}
 
-	logger.Info(fmt.Sprintf("[StartServer] Listening on %s", cfg.App.Address()))
+	logger.Info(fmt.Sprintf("[StartServer] [Proxy] Listening on %s", cfg.ProxyConfig.GetListenAddress()))
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Error(fmt.Sprintf("[StartServer] [ListenAndServe]: %s", err.Error()))
+		if err := proxyServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error(fmt.Sprintf("[StartServer] [Proxy] [ListenAndServe]: %s", err.Error()))
 			panic(err)
 		}
 	}()
 
-	go mtr.Sync()
-	gracefulShutdown(srv, logger, sync)
+	rtr := router.NewRouter(&svc, logger)
+	apiServer := &http.Server{Addr: cfg.App.Address(), Handler: rtr}
+
+	logger.Info(fmt.Sprintf("[StartServer] [API] Listening on %s", cfg.App.Address()))
+	go func() {
+		if err := apiServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error(fmt.Sprintf("[StartServer] [API] [ListenAndServe]: %s", err.Error()))
+			panic(err)
+		}
+	}()
+
+	gracefulShutdown(apiServer, proxyServer, logger, sync)
 }
 
-func gracefulShutdown(srv *http.Server, logger *zap.Logger, syncMetrics *chan bool) {
+func gracefulShutdown(apiServer, proxyServer *http.Server, logger *zap.Logger, syncMetrics *chan bool) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
@@ -60,13 +73,20 @@ func gracefulShutdown(srv *http.Server, logger *zap.Logger, syncMetrics *chan bo
 	defer cancel()
 
 	go func() {
-		if err := srv.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
-			logger.Error(fmt.Sprintf("[GracefulShutdown] [Shutdown]: %s", err.Error()))
+		if err := proxyServer.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
+			logger.Error(fmt.Sprintf("[GracefulShutdown] [Proxy] [Shutdown]: %s", err.Error()))
 			panic(err)
 		}
 	}()
 
-	*syncMetrics <- false
+	go func() {
+		if err := apiServer.Shutdown(ctx); err != nil && err != http.ErrServerClosed {
+			logger.Error(fmt.Sprintf("[GracefulShutdown] [API] [Shutdown]: %s", err.Error()))
+			panic(err)
+		}
+	}()
+
+	*syncMetrics <- metrics.SyncShutdown
 	// Wait for ack for sync completion
 	<-*syncMetrics
 }

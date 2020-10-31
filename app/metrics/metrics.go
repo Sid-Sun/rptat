@@ -11,6 +11,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	SyncShutdown = false
+	SyncNow      = true
+)
+
 type (
 	// Metrics defines and implements the requisites for metrics
 	Metrics struct {
@@ -77,7 +82,7 @@ func (m *Metrics) IncrementRequestCount(path string) error {
 
 	m.total++
 	if m.total >= m.maxPending {
-		*m.syncChan <- true
+		*m.syncChan <- SyncNow
 		m.total = 0
 	}
 
@@ -101,7 +106,7 @@ func (m *Metrics) IncrementResponseCount(path string, code int) error {
 
 	m.total++
 	if m.total >= m.maxPending {
-		*m.syncChan <- true
+		*m.syncChan <- SyncNow
 		m.total = 0
 	}
 

@@ -9,12 +9,14 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: Move to Contract / Make Public so API can use it
-type metrics map[string]dailyMetrics
+// Metrics defines the structure for data
+type Metrics map[string]DailyMetrics
 
-type dailyMetrics map[string]routeMetrics
+// DailyMetrics defines structure for a day's metrics
+type DailyMetrics map[string]RouteMetrics
 
-type routeMetrics struct {
+// RouteMetrics defines structure for metrics for a path
+type RouteMetrics struct {
 	Requests int         `json:"requests"`
 	Response map[int]int `json:"responses"`
 }
@@ -23,13 +25,13 @@ type routeMetrics struct {
 type Service interface {
 	RegisterRequests(reqs map[contract.Request]int)
 	RegisterResponses(res map[contract.Response]int)
-	GetCurrentMetrics() metrics
+	GetCurrentMetrics() Metrics
 	Commit() error
 }
 
 type metricsService struct {
 	mtx            *sync.Mutex
-	currentMetrics *metrics
+	currentMetrics *Metrics
 	lgr            *zap.Logger
 	str            *store.Store
 }
@@ -43,7 +45,7 @@ func (m *metricsService) RegisterRequests(reqs map[contract.Request]int) {
 		// metOn is the metrics on the date
 		metOn := (*m.currentMetrics)[reqElem.Date]
 		if metOn == nil {
-			metOn = make(dailyMetrics)
+			metOn = make(DailyMetrics)
 		}
 
 		// metAt is metrics at path on the day
@@ -52,7 +54,7 @@ func (m *metricsService) RegisterRequests(reqs map[contract.Request]int) {
 			metAt = make(map[int]int)
 		}
 
-		metOn[reqElem.Path] = routeMetrics{
+		metOn[reqElem.Path] = RouteMetrics{
 			Requests: metOn[reqElem.Path].Requests + count,
 			Response: metAt,
 		}
@@ -70,7 +72,7 @@ func (m *metricsService) RegisterResponses(res map[contract.Response]int) {
 		// metOn is the metrics on the date
 		metOn := (*m.currentMetrics)[response.Date]
 		if metOn == nil {
-			metOn = make(dailyMetrics)
+			metOn = make(DailyMetrics)
 		}
 
 		// metAt is metrics at path on the day
@@ -86,7 +88,7 @@ func (m *metricsService) RegisterResponses(res map[contract.Response]int) {
 }
 
 // GetCurrentMetrics returns the current metrics details
-func (m *metricsService) GetCurrentMetrics() metrics {
+func (m *metricsService) GetCurrentMetrics() Metrics {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 	return *m.currentMetrics
@@ -112,14 +114,14 @@ func (m *metricsService) Commit() error {
 }
 
 // loadMetricsFromStore loads current metrics info from store
-func (m *metricsService) loadMetricsFromStore() (*metrics, error) {
+func (m *metricsService) loadMetricsFromStore() (*Metrics, error) {
 	raw, err := (*m.str).Read()
 	if err != nil {
 		m.lgr.Sugar().Errorf("[Service] [loadMetricsFromStore] [Read] %v", err)
 		return nil, err
 	}
 
-	var currentMetrics metrics
+	var currentMetrics Metrics
 	err = json.Unmarshal(raw, &currentMetrics)
 	if err != nil {
 		m.lgr.Sugar().Errorf("[Service] [loadMetricsFromStore] [Unmarshal] %v", err)
