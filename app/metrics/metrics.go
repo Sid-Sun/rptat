@@ -55,8 +55,8 @@ func NewMetrics(svc *service.Service, cfg config.MetricsConfig) (*Metrics, *chan
 		response: instance{
 			queue: resQ,
 		},
-		syncChan: &c,
-		svc:      svc,
+		syncChan:   &c,
+		svc:        svc,
 		maxPending: cfg.GetMinForSync(),
 	}, &c, nil
 }
