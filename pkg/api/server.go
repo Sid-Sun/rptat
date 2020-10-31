@@ -37,7 +37,7 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 
 	logger.Info(fmt.Sprintf("[StartServer] Listening on %s", cfg.App.Address()))
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error(fmt.Sprintf("[StartServer] [ListenAndServe]: %s", err.Error()))
 			panic(err)
 		}
