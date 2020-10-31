@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// StartServer starts the api, inits all the requited submodules and routine for shutdown
+// StartServer starts the proxy, inits all the requited submodules and routine for shutdown
 func StartServer(cfg config.Config, logger *zap.Logger) {
 	str := store.NewStore(cfg.StoreConfig, logger)
 

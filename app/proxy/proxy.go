@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Proxy defines and implements necessities for proxy
 type Proxy struct {
 	lgr   *zap.Logger
 	tgt   *url.URL
@@ -17,11 +18,14 @@ type Proxy struct {
 	proxy *httputil.ReverseProxy
 }
 
+// NewProxy creates and returns a new Proxy with requsites initialized
+// an error is returned if config doesn't define a valid URL
 func NewProxy(cfg config.ProxyConfig, lgr *zap.Logger, mt *metrics.Metrics) (*Proxy, error) {
 	serveURL, err := url.Parse(cfg.GetServeURL())
 	if err != nil {
 		return nil, err
 	}
+
 	p := httputil.NewSingleHostReverseProxy(serveURL)
 	p.Transport = &http.Transport{
 		MaxIdleConns:        50,
@@ -37,6 +41,7 @@ func NewProxy(cfg config.ProxyConfig, lgr *zap.Logger, mt *metrics.Metrics) (*Pr
 	}, nil
 }
 
+// MetricsProxyHandler proxies requests between source and target resource while collecting metrics
 func (p *Proxy) MetricsProxyHandler() func(res http.ResponseWriter, req *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		go func() {

@@ -11,6 +11,7 @@ import (
 )
 
 type (
+	// Metrics defines and implements the requisites for metrics
 	Metrics struct {
 		svc *service.Service
 
@@ -28,15 +29,21 @@ type (
 	}
 )
 
+// NewMetrics creates and returns a new Metrics instance
+// It returns the Metrics object for registering new requests
+// And A sync method for syncing current metrics with service
+// An error is returned if initialization of requirements fail
 func NewMetrics(svc *service.Service) (*Metrics, *chan bool, error) {
 	reqQ, err := queue.NewLinkedQueue()
 	if err != nil {
 		return nil, nil, err
 	}
+
 	resQ, err := queue.NewLinkedQueue()
 	if err != nil {
 		return nil, nil, err
 	}
+
 	c := make(chan bool)
 	return &Metrics{
 		request: instance{
@@ -50,6 +57,7 @@ func NewMetrics(svc *service.Service) (*Metrics, *chan bool, error) {
 	}, &c, nil
 }
 
+// IncrementRequestCount registers a new request at the specified path
 func (m *Metrics) IncrementRequestCount(path string) error {
 	m.request.lock.Lock()
 
@@ -73,6 +81,7 @@ func (m *Metrics) IncrementRequestCount(path string) error {
 	return nil
 }
 
+// IncrementResponseCount registers a response and its status code
 func (m *Metrics) IncrementResponseCount(path string, code int) error {
 	m.response.lock.Lock()
 
@@ -96,6 +105,7 @@ func (m *Metrics) IncrementResponseCount(path string, code int) error {
 	return nil
 }
 
+// Sync syncs the local records with service
 func (m *Metrics) Sync() {
 	for {
 		cont := <-*m.syncChan
@@ -135,7 +145,7 @@ func (m *Metrics) Sync() {
 		}
 
 		if !cont {
-			// Send ack for sync ack
+			// Send ack for sync
 			*m.syncChan <- true
 			break
 		}

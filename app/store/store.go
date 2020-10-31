@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+// Store defines the store interface
 type Store interface {
 	Write(data []byte) error
 	Read() ([]byte, error)
@@ -18,6 +19,7 @@ type jsonStore struct {
 	filePerms int
 }
 
+// Write takes raw bytes and writes it to file
 func (j *jsonStore) Write(data []byte) error {
 	err := ioutil.WriteFile(j.fileName, data, os.FileMode(j.filePerms))
 	if err != nil {
@@ -27,6 +29,7 @@ func (j *jsonStore) Write(data []byte) error {
 	return nil
 }
 
+// Read reads raw bytes from file and returns the raw bytes and / or an error
 func (j *jsonStore) Read() ([]byte, error) {
 	file, err := os.Open(j.fileName)
 	if err != nil {
@@ -44,6 +47,7 @@ func (j *jsonStore) Read() ([]byte, error) {
 	return ioutil.ReadAll(file)
 }
 
+// NewStore returns a new store implementation
 func NewStore(s config.StoreConfig, lgr *zap.Logger) Store {
 	return &jsonStore{
 		lgr:       lgr,

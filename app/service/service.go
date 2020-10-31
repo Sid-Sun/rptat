@@ -9,6 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: Move to Contract / Make Public so API can use it
 type metrics map[string]dailyMetrics
 
 type dailyMetrics map[string]routeMetrics
@@ -18,6 +19,7 @@ type routeMetrics struct {
 	Response map[int]int `json:"responses"`
 }
 
+// Service defines the interface for a service
 type Service interface {
 	RegisterRequests(reqs map[contract.Request]int)
 	RegisterResponses(res map[contract.Response]int)
@@ -32,6 +34,7 @@ type metricsService struct {
 	str            *store.Store
 }
 
+// RegisterRequests registers the requests in map with local metrics
 func (m *metricsService) RegisterRequests(reqs map[contract.Request]int) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -58,6 +61,7 @@ func (m *metricsService) RegisterRequests(reqs map[contract.Request]int) {
 	}
 }
 
+// RegisterResponses registers the requests in map with local metrics
 func (m *metricsService) RegisterResponses(res map[contract.Response]int) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -80,12 +84,15 @@ func (m *metricsService) RegisterResponses(res map[contract.Response]int) {
 		(*m.currentMetrics)[response.Date] = metOn
 	}
 }
+
+// GetCurrentMetrics returns the current metrics details
 func (m *metricsService) GetCurrentMetrics() metrics {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
 	return *m.currentMetrics
 }
 
+// Commit syncs the local registered metrics with store
 func (m *metricsService) Commit() error {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()
@@ -104,6 +111,7 @@ func (m *metricsService) Commit() error {
 	return nil
 }
 
+// loadMetricsFromStore loads current metrics info from store
 func (m *metricsService) loadMetricsFromStore() (*metrics, error) {
 	raw, err := (*m.str).Read()
 	if err != nil {
@@ -121,6 +129,7 @@ func (m *metricsService) loadMetricsFromStore() (*metrics, error) {
 	return &currentMetrics, nil
 }
 
+// NewService creates and returns a service implementation
 func NewService(str *store.Store, lgr *zap.Logger) (Service, error) {
 	ms := &metricsService{
 		lgr: lgr,
