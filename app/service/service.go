@@ -21,6 +21,7 @@ type routeMetrics struct {
 type Service interface {
 	RegisterRequests(reqs map[contract.Request]int)
 	RegisterResponses(res map[contract.Response]int)
+	GetCurrentMetrics() metrics
 	Commit() error
 }
 
@@ -78,6 +79,11 @@ func (m *metricsService) RegisterResponses(res map[contract.Response]int) {
 
 		(*m.currentMetrics)[response.Date] = metOn
 	}
+}
+func (m *metricsService) GetCurrentMetrics() metrics {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+	return *m.currentMetrics
 }
 
 func (m *metricsService) Commit() error {
