@@ -6,7 +6,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	"github.com/sid-sun/rptat/pkg/api/metrics"
+	"github.com/sid-sun/rptat/app/metrics"
 	"go.uber.org/zap"
 )
 

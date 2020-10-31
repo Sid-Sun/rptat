@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/nsnikhil/go-datastructures/queue"
-	"github.com/sid-sun/rptat/pkg/api/contract"
-	"github.com/sid-sun/rptat/pkg/api/service"
+	"github.com/sid-sun/rptat/app/contract"
+	"github.com/sid-sun/rptat/app/service"
 	"go.uber.org/zap"
 )
 

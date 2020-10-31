@@ -1,4 +1,4 @@
-package api
+package app
 
 import (
 	"context"
@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/sid-sun/rptat/cmd/config"
-	"github.com/sid-sun/rptat/pkg/api/metrics"
-	"github.com/sid-sun/rptat/pkg/api/proxy"
-	"github.com/sid-sun/rptat/pkg/api/service"
-	"github.com/sid-sun/rptat/pkg/api/store"
+	"github.com/sid-sun/rptat/app/metrics"
+	"github.com/sid-sun/rptat/app/proxy"
+	"github.com/sid-sun/rptat/app/service"
+	"github.com/sid-sun/rptat/app/store"
 	"go.uber.org/zap"
 )
 

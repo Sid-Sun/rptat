@@ -3,8 +3,8 @@ package service
 import (
 	"encoding/json"
 
-	"github.com/sid-sun/rptat/pkg/api/contract"
-	"github.com/sid-sun/rptat/pkg/api/store"
+	"github.com/sid-sun/rptat/app/contract"
+	"github.com/sid-sun/rptat/app/store"
 	"go.uber.org/zap"
 )
 
@@ -23,12 +23,12 @@ type Service interface {
 	RegisterResponses(res map[contract.Response]int) error
 }
 
-type metricsSerice struct {
+type metricsService struct {
 	lgr *zap.Logger
 	str *store.Store
 }
 
-func (m *metricsSerice) RegisterRequests(reqs map[contract.Request]int) error {
+func (m *metricsService) RegisterRequests(reqs map[contract.Request]int) error {
 	currentMetrics, err := m.getCurrentMetrics()
 	if err != nil {
 		m.lgr.Sugar().Errorf("[Service] [RegisterRequests] [getCurrentMetrics] %v", err)
@@ -69,7 +69,7 @@ func (m *metricsSerice) RegisterRequests(reqs map[contract.Request]int) error {
 	return nil
 }
 
-func (m *metricsSerice) RegisterResponses(res map[contract.Response]int) error {
+func (m *metricsService) RegisterResponses(res map[contract.Response]int) error {
 	currentMetrics, err := m.getCurrentMetrics()
 	if err != nil {
 		m.lgr.Sugar().Errorf("[Service] [RegisterResponses] [getCurrentMetrics] %v", err)
@@ -96,7 +96,7 @@ func (m *metricsSerice) RegisterResponses(res map[contract.Response]int) error {
 	return nil
 }
 
-func (m *metricsSerice) getCurrentMetrics() (metrics, error) {
+func (m *metricsService) getCurrentMetrics() (metrics, error) {
 	raw, err := (*m.str).Read()
 	if err != nil {
 		m.lgr.Sugar().Errorf("[Service] [getCurrentMetrics] [Read] %v", err)
@@ -114,7 +114,7 @@ func (m *metricsSerice) getCurrentMetrics() (metrics, error) {
 }
 
 func NewService(str *store.Store, lgr *zap.Logger) Service {
-	return &metricsSerice{
+	return &metricsService{
 		lgr: lgr,
 		str: str,
 	}
