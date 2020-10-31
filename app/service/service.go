@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"sync"
 
 	"github.com/sid-sun/rptat/app/contract"
 	"github.com/sid-sun/rptat/app/store"
@@ -17,86 +18,87 @@ type routeMetrics struct {
 	Response map[int]int `json:"responses"`
 }
 
-// TODO: Implement Commit option and Threadsafety
 type Service interface {
-	RegisterRequests(reqs map[contract.Request]int) error
-	RegisterResponses(res map[contract.Response]int) error
+	RegisterRequests(reqs map[contract.Request]int)
+	RegisterResponses(res map[contract.Response]int)
+	Commit() error
 }
 
 type metricsService struct {
-	lgr *zap.Logger
-	str *store.Store
+	mtx            *sync.Mutex
+	currentMetrics *metrics
+	lgr            *zap.Logger
+	str            *store.Store
 }
 
-func (m *metricsService) RegisterRequests(reqs map[contract.Request]int) error {
-	currentMetrics, err := m.getCurrentMetrics()
-	if err != nil {
-		m.lgr.Sugar().Errorf("[Service] [RegisterRequests] [getCurrentMetrics] %v", err)
-		return err
-	}
+func (m *metricsService) RegisterRequests(reqs map[contract.Request]int) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
 
 	for reqElem, count := range reqs {
-		foo := currentMetrics[reqElem.Date]
-		if foo == nil {
-			foo = make(dailyMetrics)
+		// metOn is the metrics on the date
+		metOn := (*m.currentMetrics)[reqElem.Date]
+		if metOn == nil {
+			metOn = make(dailyMetrics)
 		}
 
-		boo := foo[reqElem.Path].Response
-		if boo == nil {
-			boo = make(map[int]int)
+		// metAt is metrics at path on the day
+		metAt := metOn[reqElem.Path].Response
+		if metAt == nil {
+			metAt = make(map[int]int)
 		}
 
-		foo[reqElem.Path] = routeMetrics{
-			Requests: foo[reqElem.Path].Requests + count,
-			Response: boo,
+		metOn[reqElem.Path] = routeMetrics{
+			Requests: metOn[reqElem.Path].Requests + count,
+			Response: metAt,
 		}
 
-		currentMetrics[reqElem.Date] = foo
+		(*m.currentMetrics)[reqElem.Date] = metOn
 	}
-
-	raw, err := json.Marshal(currentMetrics)
-	if err != nil {
-		m.lgr.Sugar().Errorf("[Service] [RegisterRequests] [Marshal] %v", err)
-		return err
-	}
-
-	err = (*m.str).Write(raw)
-	if err != nil {
-		m.lgr.Sugar().Errorf("[Service] [RegisterRequests] [Write] %v", err)
-		return err
-	}
-
-	return nil
 }
 
-func (m *metricsService) RegisterResponses(res map[contract.Response]int) error {
-	currentMetrics, err := m.getCurrentMetrics()
-	if err != nil {
-		m.lgr.Sugar().Errorf("[Service] [RegisterResponses] [getCurrentMetrics] %v", err)
-		return err
-	}
+func (m *metricsService) RegisterResponses(res map[contract.Response]int) {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
 
-	// TODO: Refactor to be independent from relying on reqs to make struct
 	for response, responseCount := range res {
-		currentMetrics[response.Date][response.Path].Response[response.Code] += responseCount
-	}
+		// metOn is the metrics on the date
+		metOn := (*m.currentMetrics)[response.Date]
+		if metOn == nil {
+			metOn = make(dailyMetrics)
+		}
 
-	raw, err := json.Marshal(currentMetrics)
+		// metAt is metrics at path on the day
+		metAt := metOn[response.Path].Response
+		if metAt == nil {
+			metAt = make(map[int]int)
+		}
+
+		metAt[response.Code] += responseCount
+
+		(*m.currentMetrics)[response.Date] = metOn
+	}
+}
+
+func (m *metricsService) Commit() error {
+	m.mtx.Lock()
+	defer m.mtx.Unlock()
+
+	raw, err := json.Marshal(*m.currentMetrics)
 	if err != nil {
-		m.lgr.Sugar().Errorf("[Service] [RegisterRequests] [Marshal] %v", err)
+		m.lgr.Sugar().Errorf("[Service] [Commit] [Marshal] %v", err)
 		return err
 	}
 
 	err = (*m.str).Write(raw)
 	if err != nil {
-		m.lgr.Sugar().Errorf("[Service] [RegisterRequests] [Write] %v", err)
+		m.lgr.Sugar().Errorf("[Service] [Commit] [Write] %v", err)
 		return err
 	}
-
 	return nil
 }
 
-func (m *metricsService) getCurrentMetrics() (metrics, error) {
+func (m *metricsService) getCurrentMetrics() (*metrics, error) {
 	raw, err := (*m.str).Read()
 	if err != nil {
 		m.lgr.Sugar().Errorf("[Service] [getCurrentMetrics] [Read] %v", err)
@@ -110,12 +112,21 @@ func (m *metricsService) getCurrentMetrics() (metrics, error) {
 		return nil, err
 	}
 
-	return currentMetrics, nil
+	return &currentMetrics, nil
 }
 
-func NewService(str *store.Store, lgr *zap.Logger) Service {
-	return &metricsService{
+func NewService(str *store.Store, lgr *zap.Logger) (Service, error) {
+	ms := &metricsService{
 		lgr: lgr,
 		str: str,
+		mtx: &sync.Mutex{},
 	}
+
+	var err error
+	ms.currentMetrics, err = ms.getCurrentMetrics()
+	if err != nil {
+		return nil, err
+	}
+
+	return ms, nil
 }

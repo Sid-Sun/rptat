@@ -8,18 +8,22 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/sid-sun/rptat/cmd/config"
 	"github.com/sid-sun/rptat/app/metrics"
 	"github.com/sid-sun/rptat/app/proxy"
 	"github.com/sid-sun/rptat/app/service"
 	"github.com/sid-sun/rptat/app/store"
+	"github.com/sid-sun/rptat/cmd/config"
 	"go.uber.org/zap"
 )
 
 // StartServer starts the api, inits all the requited submodules and routine for shutdown
 func StartServer(cfg config.Config, logger *zap.Logger) {
 	str := store.NewStore(cfg.StoreConfig, logger)
-	svc := service.NewService(&str, logger)
+
+	svc, err := service.NewService(&str, logger)
+	if err != nil {
+		panic(err)
+	}
 
 	mtr, sync, err := metrics.NewMetrics(&svc)
 	if err != nil {

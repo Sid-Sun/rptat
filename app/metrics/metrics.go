@@ -113,10 +113,7 @@ func (m *Metrics) Sync() {
 		}
 		m.request.lock.Unlock()
 
-		err := (*m.svc).RegisterRequests(reqMetrics)
-		if err != nil {
-			m.lgr.Sugar().Errorf("[Metrics] [Sync] [RegisterRequests] %v", err)
-		}
+		(*m.svc).RegisterRequests(reqMetrics)
 
 		resMetrics := make(map[contract.Response]int)
 		m.response.lock.Lock()
@@ -130,9 +127,11 @@ func (m *Metrics) Sync() {
 		}
 		m.response.lock.Unlock()
 
-		err = (*m.svc).RegisterResponses(resMetrics)
+		(*m.svc).RegisterResponses(resMetrics)
+
+		err := (*m.svc).Commit()
 		if err != nil {
-			m.lgr.Sugar().Errorf("[Metrics] [Sync] [RegisterResponses] %v", err)
+			m.lgr.Sugar().Errorf("[Metrics] [Sync] [Commit] %v", err)
 		}
 
 		if !cont {

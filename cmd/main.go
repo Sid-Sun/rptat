@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/sid-sun/rptat/cmd/config"
 	"github.com/sid-sun/rptat/app"
+	"github.com/sid-sun/rptat/cmd/config"
 )
 
 func main() {
