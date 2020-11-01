@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	SyncShutdown = true
-	SyncNow      = false
+	syncShutdown = true
+	syncNow      = false
 )
 
 type (
@@ -21,11 +21,12 @@ type (
 	Metrics struct {
 		svc *service.Service
 
-		lock     sync.Mutex
-		syncChan chan bool
-		ackChan  chan bool
-		lgr      *zap.Logger
-		total    uint
+		lock         sync.Mutex
+		syncChan     chan bool
+		ackChan      chan bool
+		shutdownChan chan bool
+		lgr          *zap.Logger
+		total        uint
 
 		request  instance
 		response instance
@@ -60,12 +61,14 @@ func NewMetrics(svc *service.Service, cfg config.MetricsConfig) (*Metrics, error
 		response: instance{
 			queue: resQ,
 		},
-		syncChan:   make(chan bool),
-		ackChan:    make(chan bool),
-		svc:        svc,
-		maxPending: cfg.GetMinForSync(),
+		syncChan:     make(chan bool),
+		ackChan:      make(chan bool),
+		shutdownChan: make(chan bool),
+		svc:          svc,
+		maxPending:   cfg.GetMinForSync(),
 	}
 	go m.sync()
+	go m.syncPeriodically(time.Second * time.Duration(cfg.GetPeriodicSyncInterval()))
 	return m, nil
 }
 
@@ -128,7 +131,19 @@ func (m *Metrics) SyncNow() {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 
-	m.syncChan <- SyncNow
+	m.syncChan <- syncNow
+	m.total = 0
+
+	<-m.ackChan
+}
+
+// SyncAndShutdown performs a blocking sync of metrics to service and shuts down the sync routine
+func (m *Metrics) SyncAndShutdown() {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+
+	m.syncChan <- syncShutdown
+	m.shutdownChan <- true
 	m.total = 0
 
 	<-m.ackChan
@@ -178,22 +193,21 @@ func (m *Metrics) sync() {
 		// Acknowledge sync completion
 		m.ackChan <- true
 		// If SyncShutdown break
-		if cont == SyncShutdown {
-			// panic("Wow")
+		if cont == syncShutdown {
 			break
 		}
 	}
 }
 
-//SyncPeriodically starts a routine which syncs metrics at given duration
-func (m *Metrics) SyncPeriodically(d time.Duration) {
-	go func() {
-		ticker := time.NewTicker(d)
-		for {
-			select {
-			case <-ticker.C:
-				m.SyncNow()
-			}
+//syncPeriodically starts a routine which syncs metrics at given duration
+func (m *Metrics) syncPeriodically(d time.Duration) {
+	ticker := time.NewTicker(d)
+	for {
+		select {
+		case <-ticker.C:
+			m.SyncNow()
+		case <-m.shutdownChan:
+			return
 		}
-	}()
+	}
 }

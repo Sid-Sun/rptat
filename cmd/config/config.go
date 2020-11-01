@@ -48,7 +48,8 @@ func Load() Config {
 			},
 		},
 		MetricsConfig: MetricsConfig{
-			minForSync: viper.GetUint("METRICS_MAX_PENDING"),
+			minForSync:           viper.GetUint("METRICS_MAX_PENDING"),
+			periodicSyncInterval: viper.GetUint("METRICS_PERIODIC_SYNC_INTERVAL_IN_SECONDS"),
 		},
 	}
 }

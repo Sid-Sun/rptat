@@ -30,7 +30,6 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 	if err != nil {
 		panic(err)
 	}
-	go mtr.SyncPeriodically(time.Second * 30)
 
 	pxy, err := proxy.NewProxy(cfg.ProxyConfig, logger, mtr)
 	if err != nil {
@@ -86,5 +85,5 @@ func gracefulShutdown(apiServer, proxyServer *http.Server, logger *zap.Logger, m
 	}()
 
 	// Perform a blocking sync
-	mtr.SyncNow()
+	mtr.SyncAndShutdown()
 }
