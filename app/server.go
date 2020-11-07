@@ -49,9 +49,9 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 	}()
 
 	rtr := router.NewRouter(&svc, mtr, logger)
-	apiServer := &http.Server{Addr: cfg.App.Address(), Handler: rtr}
+	apiServer := &http.Server{Addr: cfg.API.Address(), Handler: rtr}
 
-	logger.Info(fmt.Sprintf("[StartServer] [API] Listening on %s", cfg.App.Address()))
+	logger.Info(fmt.Sprintf("[StartServer] [API] Listening on %s", cfg.API.Address()))
 	go func() {
 		if err := apiServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error(fmt.Sprintf("[StartServer] [API] [ListenAndServe]: %s", err.Error()))

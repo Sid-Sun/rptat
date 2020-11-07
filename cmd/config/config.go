@@ -2,12 +2,15 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
+	"github.com/pelletier/go-toml"
+	"github.com/sid-sun/rptat/cmd/config/internal"
+	"io/ioutil"
+	"os"
 )
 
 // Config contains all the necessary configurations
 type Config struct {
-	App           appConfig
+	API           apiConfig
 	environment   string
 	StoreConfig   StoreConfig
 	ProxyConfig   ProxyConfig
@@ -21,35 +24,57 @@ func (c Config) GetEnv() string {
 
 // Load reads all config from env to config
 func Load() Config {
-	viper.AutomaticEnv()
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("./")
+	f, err := os.Open("config.toml")
+	if err != nil {
+		panic(err)
+	}
+	d, err := ioutil.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+	co := internal.Config{}
+	err = toml.Unmarshal(d, &co)
+	if err != nil {
+		panic(err)
+	}
 
-	fmt.Println(viper.GetString("APP_ENV"))
-	return Config{
-		environment: viper.GetString("APP_ENV"),
-		App: appConfig{
-			port: viper.GetString("APP_PORT"),
+	c := Config{
+		environment: co.App.Env,
+		API: apiConfig{
+			host: co.API.Host,
+			port: co.API.Port,
 		},
 		StoreConfig: StoreConfig{
-			fileName:  viper.GetString("FILE_NAME"),
-			filePerms: viper.GetInt("FILE_PERMS"),
+			fileName:  co.StoreConfig.FileName,
+			filePerms: co.StoreConfig.FilePerms,
 		},
 		ProxyConfig: ProxyConfig{
 			listen: listenCfg{
-				host: viper.GetString("PROXY_LISTEN_HOST"),
-				port: viper.GetInt("PROXY_LISTEN_PORT"),
+				host: co.ProxyConfig.Listen.Host,
+				port: co.ProxyConfig.Listen.Port,
 			},
 			serve: serveCfg{
-				protocol: viper.GetString("PROXY_SERVE_PROTOCOL"),
-				host:     viper.GetString("PROXY_SERVE_HOST"),
-				port:     viper.GetInt("PROXY_SERVE_PORT"),
+				protocol: co.ProxyConfig.Serve.Protocol,
+				host:     co.ProxyConfig.Serve.Host,
+				port:     co.ProxyConfig.Serve.Port,
 			},
 		},
 		MetricsConfig: MetricsConfig{
-			minForSync:           viper.GetUint("METRICS_MAX_PENDING"),
-			periodicSyncInterval: viper.GetUint("METRICS_PERIODIC_SYNC_INTERVAL_IN_SECONDS"),
+			minForSync:           co.MetricsConfig.MinForSync,
+			periodicSyncInterval: co.MetricsConfig.PeriodicSyncInterval,
 		},
 	}
+
+	d, err = toml.Marshal(co)
+	if err != nil {
+		panic(err)
+	}
+
+	err = ioutil.WriteFile("config.toml", d, 420)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(c)
+	return c
 }

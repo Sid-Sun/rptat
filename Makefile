@@ -10,4 +10,4 @@ tidy:
 	go mod tidy
 
 serve: fmt vet
-	env $(cat dev.env | xargs) go run cmd/*.go
+	env go run cmd/*.go

@@ -1,0 +1,26 @@
+
+[API]
+  host = "localhost"
+  port = "8050"
+
+[App]
+  env = "dev"
+
+[Metrics]
+  max_pending = 1
+  periodic_sync_interval = 30
+
+[Proxy]
+
+  [Proxy.listen]
+    host = "localhost"
+    port = 8080
+
+  [Proxy.serve]
+    host = "localhost"
+    port = 8081
+    protocol = "http"
+
+[Store]
+  file_name = "data.json"
+  file_perms = 420
