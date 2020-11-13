@@ -10,11 +10,9 @@ import (
 
 // Config contains all the necessary configurations
 type Config struct {
-	API           apiConfig
-	environment   string
-	StoreConfig   StoreConfig
-	ProxyConfig   ProxyConfig
-	MetricsConfig MetricsConfig
+	API         apiConfig
+	environment string
+	ProxyConfig ProxyConfig
 }
 
 // GetEnv returns the current environment
@@ -44,10 +42,6 @@ func Load() Config {
 			host: co.API.Host,
 			port: co.API.Port,
 		},
-		StoreConfig: StoreConfig{
-			fileName:  co.StoreConfig.FileName,
-			filePerms: co.StoreConfig.FilePerms,
-		},
 		ProxyConfig: ProxyConfig{
 			listen: listenCfg{
 				host: co.ProxyConfig.Listen.Host,
@@ -58,10 +52,14 @@ func Load() Config {
 				host:     co.ProxyConfig.Serve.Host,
 				port:     co.ProxyConfig.Serve.Port,
 			},
-		},
-		MetricsConfig: MetricsConfig{
+			Store: StoreConfig{
+				fileName:  co.ProxyConfig.Store.FileName,
+				filePerms: co.ProxyConfig.Store.FilePerms,
+			},
+			Metrics: MetricsConfig{
 			minForSync:           co.MetricsConfig.MinForSync,
 			periodicSyncInterval: co.MetricsConfig.PeriodicSyncInterval,
+		},
 		},
 	}
 

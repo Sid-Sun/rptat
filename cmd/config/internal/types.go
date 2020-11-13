@@ -6,7 +6,6 @@ type Config struct {
 	App struct {
 		Env string `toml:"env"`
 	} `toml:"App"`
-	StoreConfig   StoreConfig   `toml:"Store"`
 	ProxyConfig   ProxyConfig   `toml:"Proxy"`
 	MetricsConfig MetricsConfig `toml:"Metrics"`
 }
@@ -34,6 +33,7 @@ type (
 	ProxyConfig struct {
 		Listen ListenCfg `toml:"listen"`
 		Serve  ServeCfg  `toml:"serve"`
+		Store StoreConfig `toml:"store"`
 	}
 	ListenCfg struct {
 		Port int    `toml:"port"`

@@ -19,19 +19,19 @@ import (
 
 // StartServer starts the proxy, inits all the requited submodules and routine for shutdown
 func StartServer(cfg config.Config, logger *zap.Logger) {
-	str := store.NewStore(cfg.StoreConfig, logger)
+	str := store.NewStore(cfg.ProxyConfig.Store, logger)
 
 	svc, err := service.NewService(&str, logger)
 	if err != nil {
 		panic(err)
 	}
 
-	mtr, err := metrics.NewMetrics(&svc, cfg.MetricsConfig)
+	mtr, err := metrics.NewMetrics(&svc, cfg.ProxyConfig.Metrics)
 	if err != nil {
 		panic(err)
 	}
 
-	pxy, err := proxy.NewProxy(cfg.ProxyConfig, logger, mtr)
+	pxy, err := proxy.NewProxy(&cfg.ProxyConfig, logger, mtr)
 	if err != nil {
 		panic(err)
 	}

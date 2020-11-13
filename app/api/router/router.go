@@ -13,7 +13,7 @@ import (
 // NewRouter returns a new router instance
 func NewRouter(svc *service.Service, mtr *metrics.Metrics, lgr *zap.Logger) *mux.Router {
 	rtr := mux.NewRouter()
-
+	
 	rtr.Handle("/getall", handlers.GetHandler(svc, mtr, lgr)).Methods(http.MethodPost)
 
 	return rtr

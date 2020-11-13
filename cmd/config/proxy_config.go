@@ -5,8 +5,11 @@ import "fmt"
 type (
 	// ProxyConfig defines config for proxies
 	ProxyConfig struct {
+		name string
 		listen listenCfg
 		serve  serveCfg
+		Store StoreConfig
+		Metrics MetricsConfig
 	}
 	listenCfg struct {
 		port int
@@ -18,6 +21,10 @@ type (
 		host     string
 	}
 )
+
+func (p ProxyConfig) GetName() string {
+	return p.name
+}
 
 // GetListenAddress returns the address proxy should listen at
 func (p ProxyConfig) GetListenAddress() string {
