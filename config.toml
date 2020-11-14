@@ -4,38 +4,38 @@
   host = "localhost"
   port = 7000
 
-[[Proxies]]
+[[Proxy]]
   host = "localhost"
   hostname = "localhost:5070"
   port = 6000
   protocol = "http"
 
-  [Proxies.Auth]
+  [Proxy.Auth]
     htDigestFile = "htdigest"
     realm = "RPTAT"
 
-  [Proxies.Metrics]
+  [Proxy.Metrics]
     max_pending = 1
     periodic_sync_interval = 30
 
-  [Proxies.Store]
+  [Proxy.Store]
     file_name = "sample.json"
     file_perms = 420
 
-[[Proxies]]
+[[Proxy]]
   host = "localhost"
   hostname = "localhost:5071"
   port = 6001
   protocol = "http"
 
-  [Proxies.Auth]
+  [Proxy.Auth]
     htDigestFile = "htdigest"
     realm = "RPTAT"
 
-  [Proxies.Metrics]
+  [Proxy.Metrics]
     max_pending = 51
     periodic_sync_interval = 45
 
-  [Proxies.Store]
+  [Proxy.Store]
     file_name = "notes.json"
     file_perms = 420

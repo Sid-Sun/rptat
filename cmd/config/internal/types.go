@@ -3,7 +3,7 @@ package internal
 // Config is the father of stupids
 type Config struct {
 	App         AppConfig     `toml:"App"`
-	ProxyConfig []ProxyConfig `toml:"Proxies"`
+	ProxyConfig []ProxyConfig `toml:"Proxy"`
 }
 
 // APIConfig is stupid
