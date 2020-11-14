@@ -42,7 +42,7 @@ func NewProxy(cfg config.ProxyConfig, lgr *zap.Logger, mt *metrics.Metrics) (*Pr
 }
 
 // MetricsProxyHandler proxies requests between source and target resource while collecting metrics
-func (p *Proxy) MetricsProxyHandler() func(res http.ResponseWriter, req *http.Request) {
+func (p *Proxy) MetricsProxyHandler() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		go func() {
 			err := p.mt.IncrementRequestCount(req.URL.Path)

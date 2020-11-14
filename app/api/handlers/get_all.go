@@ -21,7 +21,6 @@ func GetHandler(svc *service.Service, mtr *metrics.Metrics, lgr *zap.Logger) htt
 			return
 		}
 
-		writer.Header().Add("Content-Type", "application/json")
 		_, err = writer.Write(raw)
 	}
 }
