@@ -29,19 +29,10 @@ type StoreConfig struct {
 	FilePerms int    `toml:"file_perms"`
 }
 
-type (
-	// ProxyConfig is very
-	ProxyConfig struct {
-		Listen ListenCfg `toml:"listen"`
-		Serve  ServeCfg  `toml:"serve"`
-	}
-	ListenCfg struct {
-		Port int    `toml:"port"`
-		Host string `toml:"host"`
-	}
-	ServeCfg struct {
-		Protocol string `toml:"protocol"`
-		Port     int    `toml:"port"`
-		Host     string `toml:"host"`
-	}
-)
+// ProxyConfig is very
+type ProxyConfig struct {
+	Protocol string `toml:"protocol"`
+	Port     int    `toml:"port"`
+	Host     string `toml:"host"`
+	Hostname string `toml:"hostname"`
+}

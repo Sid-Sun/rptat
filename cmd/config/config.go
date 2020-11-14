@@ -49,15 +49,10 @@ func Load() Config {
 			filePerms: co.StoreConfig.FilePerms,
 		},
 		ProxyConfig: ProxyConfig{
-			listen: listenCfg{
-				host: co.ProxyConfig.Listen.Host,
-				port: co.ProxyConfig.Listen.Port,
-			},
-			serve: serveCfg{
-				protocol: co.ProxyConfig.Serve.Protocol,
-				host:     co.ProxyConfig.Serve.Host,
-				port:     co.ProxyConfig.Serve.Port,
-			},
+			protocol: co.ProxyConfig.Protocol,
+			port:     co.ProxyConfig.Port,
+			host:     co.ProxyConfig.Host,
+			hostname: co.ProxyConfig.Hostname,
 		},
 		MetricsConfig: MetricsConfig{
 			minForSync:           co.MetricsConfig.MinForSync,

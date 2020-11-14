@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/sid-sun/rptat/app/api/router"
+	"github.com/sid-sun/rptat/app/proxy_router"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,9 +37,12 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 		panic(err)
 	}
 
-	http.HandleFunc("/", pxy.MetricsProxyHandler())
+	proxies := *new([]*proxy.Proxy)
+	proxies = append(proxies, pxy)
 
-	proxyServer := &http.Server{Addr: cfg.ProxyConfig.GetListenAddress()}
+	proxyRouter := proxy_router.NewProxyRouter(proxies)
+
+	proxyServer := &http.Server{Addr: "localhost:7000", Handler: proxyRouter}
 
 	logger.Info(fmt.Sprintf("[StartServer] [Proxy] Listening on %s", cfg.ProxyConfig.GetListenAddress()))
 	go func() {
