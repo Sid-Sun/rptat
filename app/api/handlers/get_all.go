@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/sid-sun/rptat/app/metrics"
-	"github.com/sid-sun/rptat/app/service"
+	"github.com/sid-sun/rptat/app/proxy/metrics"
+	"github.com/sid-sun/rptat/app/proxy/service"
 	"go.uber.org/zap"
 )
 
@@ -23,6 +23,5 @@ func GetHandler(svc *service.Service, mtr *metrics.Metrics, lgr *zap.Logger) htt
 
 		writer.Header().Add("Content-Type", "application/json")
 		_, err = writer.Write(raw)
-
 	}
 }

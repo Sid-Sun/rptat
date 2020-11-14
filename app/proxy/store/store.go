@@ -49,6 +49,7 @@ func (j *jsonStore) Read() ([]byte, error) {
 
 // NewStore returns a new store implementation
 func NewStore(s *config.StoreConfig, lgr *zap.Logger) Store {
+	lgr.Info(s.GetFileName())
 	return &jsonStore{
 		lgr:       lgr,
 		fileName:  s.GetFileName(),

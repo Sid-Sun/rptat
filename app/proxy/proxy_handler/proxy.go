@@ -1,4 +1,4 @@
-package proxy
+package proxy_handler
 
 import (
 	"github.com/sid-sun/rptat/cmd/config"
@@ -6,17 +6,16 @@ import (
 	"net/http/httputil"
 	"net/url"
 
-	"github.com/sid-sun/rptat/app/metrics"
+	"github.com/sid-sun/rptat/app/proxy/metrics"
 	"go.uber.org/zap"
 )
 
 // Proxy defines and implements necessities for proxy
 type Proxy struct {
-	lgr      *zap.Logger
-	tgt      *url.URL
-	mt       *metrics.Metrics
-	proxy    *httputil.ReverseProxy
-	Hostname string
+	lgr   *zap.Logger
+	tgt   *url.URL
+	mt    *metrics.Metrics
+	proxy *httputil.ReverseProxy
 }
 
 // NewProxy creates and returns a new Proxy with requsites initialized
@@ -35,11 +34,10 @@ func NewProxy(cfg config.ProxyConfig, lgr *zap.Logger, mt *metrics.Metrics) (*Pr
 	}
 
 	return &Proxy{
-		lgr:      lgr,
-		mt:       mt,
-		proxy:    p,
-		tgt:      serveURL,
-		Hostname: cfg.GetHostname(),
+		lgr:   lgr,
+		mt:    mt,
+		proxy: p,
+		tgt:   serveURL,
 	}, nil
 }
 

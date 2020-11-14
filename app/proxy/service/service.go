@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/sid-sun/rptat/app/contract"
-	"github.com/sid-sun/rptat/app/store"
+	"github.com/sid-sun/rptat/app/proxy/store"
 	"go.uber.org/zap"
 )
 

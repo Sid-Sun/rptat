@@ -1,10 +1,8 @@
 
-[API]
-  host = "localhost"
-  port = "8050"
-
 [App]
   env = "dev"
+  host = "localhost"
+  port = 7000
 
 [[Proxies]]
   host = "localhost"
@@ -13,7 +11,7 @@
   protocol = "http"
 
   [Proxies.Metrics]
-    max_pending = 0
+    max_pending = 1
     periodic_sync_interval = 30
 
   [Proxies.Store]
@@ -27,7 +25,7 @@
   protocol = "http"
 
   [Proxies.Metrics]
-    max_pending = 50
+    max_pending = 51
     periodic_sync_interval = 45
 
   [Proxies.Store]

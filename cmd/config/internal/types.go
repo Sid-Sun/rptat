@@ -2,17 +2,15 @@ package internal
 
 // Config is the father of stupids
 type Config struct {
-	API APIConfig `toml:"API"`
-	App struct {
-		Env string `toml:"env"`
-	} `toml:"App"`
+	App         AppConfig     `toml:"App"`
 	ProxyConfig []ProxyConfig `toml:"Proxies"`
 }
 
 // APIConfig is stupid
-type APIConfig struct {
+type AppConfig struct {
+	Env  string `toml:"env"`
 	Host string `toml:"host"`
-	Port string `toml:"port"`
+	Port uint   `toml:"port"`
 }
 
 // MetricsConfig is also stupid

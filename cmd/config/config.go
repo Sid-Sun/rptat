@@ -9,7 +9,7 @@ import (
 
 // Config contains all the necessary configurations
 type Config struct {
-	API         apiConfig
+	API         appConfig
 	environment string
 	ProxyConfig []ProxyConfig
 }
@@ -37,9 +37,9 @@ func Load() Config {
 
 	c := Config{
 		environment: co.App.Env,
-		API: apiConfig{
-			host: co.API.Host,
-			port: co.API.Port,
+		API: appConfig{
+			host: co.App.Host,
+			port: co.App.Port,
 		},
 		ProxyConfig: *new([]ProxyConfig),
 	}

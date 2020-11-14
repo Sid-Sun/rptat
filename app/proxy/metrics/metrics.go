@@ -6,7 +6,7 @@ import (
 
 	"github.com/nsnikhil/go-datastructures/queue"
 	"github.com/sid-sun/rptat/app/contract"
-	"github.com/sid-sun/rptat/app/service"
+	"github.com/sid-sun/rptat/app/proxy/service"
 	"github.com/sid-sun/rptat/cmd/config"
 	"go.uber.org/zap"
 )
