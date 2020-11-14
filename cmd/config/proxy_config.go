@@ -5,13 +5,13 @@ import "fmt"
 type (
 	// ProxyConfig defines config for proxies
 	ProxyConfig struct {
-		protocol   string
-		port       int
-		host       string
-		hostname   string
-		Store      *StoreConfig
-		Metrics    *MetricsConfig
-		AuthConfig *Auth
+		protocol      string
+		port          int
+		host          string
+		hostname      string
+		StoreConfig   *StoreConfig
+		MetricsConfig *MetricsConfig
+		AuthConfig    *Auth
 	}
 	Auth struct {
 		htDigestFile string

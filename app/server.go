@@ -23,14 +23,14 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 	proxies := *new([]proxy.Proxy)
 
 	for _, pxy := range cfg.ProxyConfig {
-		str := store.NewStore(pxy.Store, logger)
+		str := store.NewStore(pxy.StoreConfig, logger)
 
 		svc, err := service.NewService(&str, logger)
 		if err != nil {
 			panic(err)
 		}
 
-		mtr, err := metrics.NewMetrics(&svc, pxy.Metrics)
+		mtr, err := metrics.NewMetrics(&svc, pxy.MetricsConfig)
 		if err != nil {
 			panic(err)
 		}

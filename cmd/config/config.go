@@ -50,11 +50,11 @@ func Load() Config {
 			port:     pxy.Port,
 			host:     pxy.Host,
 			hostname: pxy.Hostname,
-			Store: &StoreConfig{
+			StoreConfig: &StoreConfig{
 				fileName:  pxy.StoreConfig.FileName,
 				filePerms: pxy.StoreConfig.FilePerms,
 			},
-			Metrics: &MetricsConfig{
+			MetricsConfig: &MetricsConfig{
 				minForSync:           pxy.MetricsConfig.MinForSync,
 				periodicSyncInterval: pxy.MetricsConfig.PeriodicSyncInterval,
 			},
