@@ -41,10 +41,11 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 		}
 
 		proxies = append(proxies, proxy.Proxy{
-			Handler:  p,
-			Service:  &svc,
-			Metrics:  mtr,
-			Hostname: pxy.GetHostname(),
+			Handler:    p,
+			Service:    &svc,
+			Metrics:    mtr,
+			Hostname:   pxy.GetHostname(),
+			AuthConfig: pxy.AuthConfig,
 		})
 		logger.Sugar().Infof("Subscribed [%s] as [%s]", pxy.GetServeURL(), pxy.GetHostname())
 	}

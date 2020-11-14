@@ -5,12 +5,17 @@ import "fmt"
 type (
 	// ProxyConfig defines config for proxies
 	ProxyConfig struct {
-		protocol string
-		port     int
-		host     string
-		hostname string
-		Store    *StoreConfig
-		Metrics  *MetricsConfig
+		protocol   string
+		port       int
+		host       string
+		hostname   string
+		Store      *StoreConfig
+		Metrics    *MetricsConfig
+		AuthConfig *Auth
+	}
+	Auth struct {
+		htDigestFile string
+		realm        string
 	}
 )
 
@@ -22,4 +27,12 @@ func (p ProxyConfig) GetServeURL() string {
 // GetHostname defines the URL for resource to be proxied
 func (p ProxyConfig) GetHostname() string {
 	return p.hostname
+}
+
+func (a *Auth) GetDigestFileName() string {
+	return a.htDigestFile
+}
+
+func (a *Auth) GetRealm() string {
+	return a.realm
 }

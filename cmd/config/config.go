@@ -58,6 +58,10 @@ func Load() Config {
 				minForSync:           pxy.MetricsConfig.MinForSync,
 				periodicSyncInterval: pxy.MetricsConfig.PeriodicSyncInterval,
 			},
+			AuthConfig: &Auth{
+				htDigestFile: pxy.AuthConfig.HTDigestFile,
+				realm:        pxy.AuthConfig.Realm,
+			},
 		})
 	}
 
@@ -71,6 +75,5 @@ func Load() Config {
 		panic(err)
 	}
 
-	//fmt.Println(c)
 	return c
 }

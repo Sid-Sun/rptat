@@ -10,6 +10,10 @@
   port = 6000
   protocol = "http"
 
+  [Proxies.Auth]
+    htDigestFile = "htdigest"
+    realm = "RPTAT"
+
   [Proxies.Metrics]
     max_pending = 1
     periodic_sync_interval = 30
@@ -23,6 +27,10 @@
   hostname = "localhost:5071"
   port = 6001
   protocol = "http"
+
+  [Proxies.Auth]
+    htDigestFile = "htdigest"
+    realm = "RPTAT"
 
   [Proxies.Metrics]
     max_pending = 51

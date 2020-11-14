@@ -13,6 +13,11 @@ type AppConfig struct {
 	Port uint   `toml:"port"`
 }
 
+type Auth struct {
+	HTDigestFile string `toml:"htDigestFile"`
+	Realm        string `toml:"realm"`
+}
+
 // MetricsConfig is also stupid
 type MetricsConfig struct {
 	MinForSync           uint `toml:"max_pending"`
@@ -33,4 +38,5 @@ type ProxyConfig struct {
 	Hostname      string        `toml:"hostname"`
 	StoreConfig   StoreConfig   `toml:"Store"`
 	MetricsConfig MetricsConfig `toml:"Metrics"`
+	AuthConfig    Auth          `toml:"Auth"`
 }
