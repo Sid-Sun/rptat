@@ -43,7 +43,7 @@ type (
 // It returns the Metrics object for registering new requests
 // And A sync method for syncing current metrics with service
 // An error is returned if initialization of requirements fail
-func NewMetrics(svc *service.Service, cfg config.MetricsConfig) (*Metrics, error) {
+func NewMetrics(svc *service.Service, cfg *config.MetricsConfig) (*Metrics, error) {
 	reqQ, err := queue.NewLinkedQueue()
 	if err != nil {
 		return nil, err

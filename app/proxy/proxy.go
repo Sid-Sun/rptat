@@ -53,6 +53,7 @@ func (p *Proxy) MetricsProxyHandler() func(res http.ResponseWriter, req *http.Re
 			}
 		}()
 
+		//p.lgr.Info(req.Host)
 		p.serveReverseProxy(res, req)
 	}
 }

@@ -48,7 +48,7 @@ func (j *jsonStore) Read() ([]byte, error) {
 }
 
 // NewStore returns a new store implementation
-func NewStore(s config.StoreConfig, lgr *zap.Logger) Store {
+func NewStore(s *config.StoreConfig, lgr *zap.Logger) Store {
 	return &jsonStore{
 		lgr:       lgr,
 		fileName:  s.GetFileName(),

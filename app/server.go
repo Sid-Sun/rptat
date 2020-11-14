@@ -20,31 +20,41 @@ import (
 
 // StartServer starts the proxy, inits all the requited submodules and routine for shutdown
 func StartServer(cfg config.Config, logger *zap.Logger) {
-	str := store.NewStore(cfg.StoreConfig, logger)
 
-	svc, err := service.NewService(&str, logger)
-	if err != nil {
-		panic(err)
-	}
-
-	mtr, err := metrics.NewMetrics(&svc, cfg.MetricsConfig)
-	if err != nil {
-		panic(err)
-	}
-
-	pxy, err := proxy.NewProxy(cfg.ProxyConfig, logger, mtr)
-	if err != nil {
-		panic(err)
-	}
+	var str store.Store
+	var svc service.Service
+	var mtr *metrics.Metrics
+	var err error
 
 	proxies := *new([]*proxy.Proxy)
-	proxies = append(proxies, pxy)
+
+	for _, pxy := range cfg.ProxyConfig {
+		str = store.NewStore(pxy.Store, logger)
+
+		svc, err = service.NewService(&str, logger)
+		if err != nil {
+			panic(err)
+		}
+
+		mtr, err = metrics.NewMetrics(&svc, pxy.Metrics)
+		if err != nil {
+			panic(err)
+		}
+
+		p, err := proxy.NewProxy(pxy, logger, mtr)
+		if err != nil {
+			panic(err)
+		}
+
+		proxies = append(proxies, p)
+		logger.Sugar().Infof("Subscribed [%s] as [%s]", pxy.GetServeURL(), pxy.GetHostname())
+	}
 
 	proxyRouter := proxy_router.NewProxyRouter(proxies)
 
 	proxyServer := &http.Server{Addr: "localhost:7000", Handler: proxyRouter}
 
-	logger.Info(fmt.Sprintf("[StartServer] [Proxy] Listening on %s", cfg.ProxyConfig.GetListenAddress()))
+	logger.Info(fmt.Sprintf("[StartServer] [Proxy] Listening on localhost:7000"))
 	go func() {
 		if err := proxyServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error(fmt.Sprintf("[StartServer] [Proxy] [ListenAndServe]: %s", err.Error()))

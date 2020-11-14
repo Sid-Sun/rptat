@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/pelletier/go-toml"
 	"github.com/sid-sun/rptat/cmd/config/internal"
 	"io/ioutil"
@@ -10,11 +9,9 @@ import (
 
 // Config contains all the necessary configurations
 type Config struct {
-	API           apiConfig
-	environment   string
-	StoreConfig   StoreConfig
-	ProxyConfig   ProxyConfig
-	MetricsConfig MetricsConfig
+	API         apiConfig
+	environment string
+	ProxyConfig []ProxyConfig
 }
 
 // GetEnv returns the current environment
@@ -44,20 +41,24 @@ func Load() Config {
 			host: co.API.Host,
 			port: co.API.Port,
 		},
-		StoreConfig: StoreConfig{
-			fileName:  co.StoreConfig.FileName,
-			filePerms: co.StoreConfig.FilePerms,
-		},
-		ProxyConfig: ProxyConfig{
-			protocol: co.ProxyConfig.Protocol,
-			port:     co.ProxyConfig.Port,
-			host:     co.ProxyConfig.Host,
-			hostname: co.ProxyConfig.Hostname,
-		},
-		MetricsConfig: MetricsConfig{
-			minForSync:           co.MetricsConfig.MinForSync,
-			periodicSyncInterval: co.MetricsConfig.PeriodicSyncInterval,
-		},
+		ProxyConfig: *new([]ProxyConfig),
+	}
+
+	for _, pxy := range co.ProxyConfig {
+		c.ProxyConfig = append(c.ProxyConfig, ProxyConfig{
+			protocol: pxy.Protocol,
+			port:     pxy.Port,
+			host:     pxy.Host,
+			hostname: pxy.Hostname,
+			Store: &StoreConfig{
+				fileName:  pxy.StoreConfig.FileName,
+				filePerms: pxy.StoreConfig.FilePerms,
+			},
+			Metrics: &MetricsConfig{
+				minForSync:           pxy.MetricsConfig.MinForSync,
+				periodicSyncInterval: pxy.MetricsConfig.PeriodicSyncInterval,
+			},
+		})
 	}
 
 	d, err = toml.Marshal(co)
@@ -70,6 +71,6 @@ func Load() Config {
 		panic(err)
 	}
 
-	fmt.Println(c)
+	//fmt.Println(c)
 	return c
 }

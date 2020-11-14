@@ -9,13 +9,10 @@ type (
 		port     int
 		host     string
 		hostname string
+		Store    *StoreConfig
+		Metrics  *MetricsConfig
 	}
 )
-
-// GetListenAddress returns the address proxy should listen at
-func (p ProxyConfig) GetListenAddress() string {
-	return fmt.Sprintf("%s:%d", p.host, p.port)
-}
 
 // GetServeURL defines the URL for resource to be proxied
 func (p ProxyConfig) GetServeURL() string {

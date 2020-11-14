@@ -6,9 +6,7 @@ type Config struct {
 	App struct {
 		Env string `toml:"env"`
 	} `toml:"App"`
-	StoreConfig   StoreConfig   `toml:"Store"`
-	ProxyConfig   ProxyConfig   `toml:"Proxy"`
-	MetricsConfig MetricsConfig `toml:"Metrics"`
+	ProxyConfig []ProxyConfig `toml:"Proxies"`
 }
 
 // APIConfig is stupid
@@ -31,8 +29,10 @@ type StoreConfig struct {
 
 // ProxyConfig is very
 type ProxyConfig struct {
-	Protocol string `toml:"protocol"`
-	Port     int    `toml:"port"`
-	Host     string `toml:"host"`
-	Hostname string `toml:"hostname"`
+	Protocol      string        `toml:"protocol"`
+	Port          int           `toml:"port"`
+	Host          string        `toml:"host"`
+	Hostname      string        `toml:"hostname"`
+	StoreConfig   StoreConfig   `toml:"Store"`
+	MetricsConfig MetricsConfig `toml:"Metrics"`
 }

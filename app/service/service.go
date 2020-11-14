@@ -142,6 +142,7 @@ func NewService(str *store.Store, lgr *zap.Logger) (Service, error) {
 	var err error
 	ms.currentMetrics, err = ms.loadMetricsFromStore()
 	if err != nil {
+		lgr.Sugar().Errorf("[Service] [NewService] [loadMetricsFromStore] %v", err)
 		return nil, err
 	}
 
