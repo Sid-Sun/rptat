@@ -3,6 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/hostrouter"
 	"github.com/sid-sun/rptat/app/proxy"
 	"github.com/sid-sun/rptat/app/router"
 	"net/http"
@@ -17,13 +20,18 @@ import (
 // StartServer starts the proxy, inits all the requited submodules and routine for shutdown
 func StartServer(cfg config.Config, logger *zap.Logger) {
 	proxies := *new([]proxy.Proxy)
+	hr := hostrouter.New()
 
 	for _, pxy := range cfg.ProxyConfig {
-		proxies = append(proxies, proxy.NewProxy(&pxy, logger))
+		prox := proxy.NewProxy(&pxy, logger)
+		proxies = append(proxies, prox)
+		hr.Map(pxy.GetHostname(), router.NewProxyRouter(prox, logger))
 		logger.Sugar().Infof("Subscribed [%s] as [%s]", pxy.GetServeURL(), pxy.GetHostname())
 	}
 
-	proxyRouter := router.NewProxyRouter(proxies, logger)
+	proxyRouter := chi.NewRouter()
+	proxyRouter.Use(middleware.Recoverer)
+	proxyRouter.Mount("/", hr)
 	proxyServer := &http.Server{Addr: cfg.API.Address(), Handler: proxyRouter}
 
 	logger.Info(fmt.Sprintf("[StartServer] [Server] Listening on %s", cfg.API.Address()))

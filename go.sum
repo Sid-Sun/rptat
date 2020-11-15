@@ -5,9 +5,11 @@ github.com/abbot/go-http-auth v0.4.0/go.mod h1:Cz6ARTIzApMJDzh5bRMSUou6UMSp0IEXg
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/go-chi/chi v1.5.0 h1:2ZcJZozJ+rj6BA0c19ffBUGXEKAT/aOLOtQjD46vBRA=
+github.com/go-chi/chi v1.5.0/go.mod h1:REp24E+25iKvxgeTfHmdUoL5x15kBiDBlnIl5bCwe2k=
+github.com/go-chi/hostrouter v0.0.0-20201102173854-85defb39fbf4 h1:CW9qf8zzY5ml3wkYZOLBNxfsZQkAXkwktplbh1Jw/1Q=
+github.com/go-chi/hostrouter v0.0.0-20201102173854-85defb39fbf4/go.mod h1:O0Q6TlPEvjLqJu7QcX2GYOBDKkQfKmVIPsZeCy3/KJA=
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
-github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
-github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
