@@ -13,6 +13,7 @@ type (
 		MetricsConfig *MetricsConfig
 		AuthConfig    *Auth
 	}
+	// Auth defines the authentication config
 	Auth struct {
 		htDigestFile string
 		realm        string
@@ -29,10 +30,12 @@ func (p ProxyConfig) GetHostname() string {
 	return p.hostname
 }
 
+// GetDigestFileName returns the HTTP Digest file name
 func (a *Auth) GetDigestFileName() string {
 	return a.htDigestFile
 }
 
+// GetRealm returns thr realm for Digest auth
 func (a *Auth) GetRealm() string {
 	return a.realm
 }

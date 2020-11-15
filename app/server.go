@@ -4,16 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/sid-sun/rptat/app/proxy"
-	"github.com/sid-sun/rptat/app/proxy/proxy_handler"
 	"github.com/sid-sun/rptat/app/router"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	"github.com/sid-sun/rptat/app/proxy/metrics"
-	"github.com/sid-sun/rptat/app/proxy/service"
-	"github.com/sid-sun/rptat/app/proxy/store"
 	"github.com/sid-sun/rptat/cmd/config"
 	"go.uber.org/zap"
 )
@@ -23,35 +19,11 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 	proxies := *new([]proxy.Proxy)
 
 	for _, pxy := range cfg.ProxyConfig {
-		str := store.NewStore(pxy.StoreConfig, logger)
-
-		svc, err := service.NewService(&str, logger)
-		if err != nil {
-			panic(err)
-		}
-
-		mtr, err := metrics.NewMetrics(&svc, pxy.MetricsConfig)
-		if err != nil {
-			panic(err)
-		}
-
-		p, err := proxy_handler.NewProxy(pxy, logger, mtr)
-		if err != nil {
-			panic(err)
-		}
-
-		proxies = append(proxies, proxy.Proxy{
-			Handler:    p,
-			Service:    &svc,
-			Metrics:    mtr,
-			Hostname:   pxy.GetHostname(),
-			AuthConfig: pxy.AuthConfig,
-		})
+		proxies = append(proxies, proxy.NewProxy(&pxy, logger))
 		logger.Sugar().Infof("Subscribed [%s] as [%s]", pxy.GetServeURL(), pxy.GetHostname())
 	}
 
 	proxyRouter := router.NewProxyRouter(proxies, logger)
-
 	proxyServer := &http.Server{Addr: cfg.API.Address(), Handler: proxyRouter}
 
 	logger.Info(fmt.Sprintf("[StartServer] [Server] Listening on %s", cfg.API.Address()))

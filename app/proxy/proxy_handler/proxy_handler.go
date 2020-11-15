@@ -18,9 +18,9 @@ type Proxy struct {
 	proxy *httputil.ReverseProxy
 }
 
-// NewProxy creates and returns a new Proxy with requsites initialized
+// NewProxyHandler creates and returns a new Proxy with requsites initialized
 // an error is returned if config doesn't define a valid URL
-func NewProxy(cfg config.ProxyConfig, lgr *zap.Logger, mt *metrics.Metrics) (*Proxy, error) {
+func NewProxyHandler(cfg config.ProxyConfig, lgr *zap.Logger, mt *metrics.Metrics) (*Proxy, error) {
 	serveURL, err := url.Parse(cfg.GetServeURL())
 	if err != nil {
 		return nil, err
