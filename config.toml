@@ -15,7 +15,7 @@
     realm = "RPTAT"
 
   [Proxy.Metrics]
-    max_pending = 1
+    max_pending = 0
     periodic_sync_interval = 30
 
   [Proxy.Store]
@@ -33,7 +33,7 @@
     realm = "RPTAT"
 
   [Proxy.Metrics]
-    max_pending = 51
+    max_pending = 0
     periodic_sync_interval = 45
 
   [Proxy.Store]
