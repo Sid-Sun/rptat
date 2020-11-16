@@ -6,7 +6,10 @@ import (
 )
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		panic(err)
+	}
 	initLogger(cfg.GetEnv())
 	app.StartServer(cfg, logger)
 }

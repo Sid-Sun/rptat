@@ -20,19 +20,18 @@ func (c Config) GetEnv() string {
 }
 
 // Load reads all config from env to config
-func Load() Config {
+func Load() (Config, error) {
 	f, err := os.Open("config.toml")
 	if err != nil {
-		panic(err)
+		return Config{}, err
 	}
 	d, err := ioutil.ReadAll(f)
 	if err != nil {
-		panic(err)
 	}
 	co := internal.Config{}
 	err = toml.Unmarshal(d, &co)
 	if err != nil {
-		panic(err)
+		return Config{}, err
 	}
 
 	c := Config{
@@ -67,13 +66,13 @@ func Load() Config {
 
 	d, err = toml.Marshal(co)
 	if err != nil {
-		panic(err)
+		return Config{}, err
 	}
 
 	err = ioutil.WriteFile("config.toml", d, 420)
 	if err != nil {
-		panic(err)
+		return Config{}, err
 	}
 
-	return c
+	return c, nil
 }
