@@ -1,7 +1,6 @@
 package main
 
 import (
-	// "github.com/sid-sun/rptat/app"
 	"github.com/sid-sun/rptat/app"
 	"github.com/sid-sun/rptat/cmd/config"
 )

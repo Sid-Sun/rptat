@@ -32,6 +32,19 @@ func (j *jsonStore) Write(data []byte) error {
 // Read reads raw bytes from file and returns the raw bytes and / or an error
 func (j *jsonStore) Read() ([]byte, error) {
 	file, err := os.Open(j.fileName)
+	if os.IsNotExist(err) {
+		file, err = os.Create(j.fileName)
+		if err != nil {
+			j.lgr.Sugar().Errorf("[Store] [Read] [Open] [ErrNotExist] [Create] %v", err)
+			return nil, err
+		}
+		_, err = file.Write([]byte("{}"))
+		if err != nil {
+			j.lgr.Sugar().Errorf("[Store] [Read] [Open] [ErrNotExist] [Write] %v", err)
+			return nil, err
+		}
+		_, _ = file.Seek(0, 0)
+	}
 	if err != nil {
 		j.lgr.Sugar().Errorf("[Store] [Read] [Open] %v", err)
 		return nil, err
