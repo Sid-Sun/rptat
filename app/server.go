@@ -8,23 +8,30 @@ import (
 	"github.com/go-chi/hostrouter"
 	"github.com/sid-sun/rptat/app/proxy"
 	"github.com/sid-sun/rptat/app/router"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/sid-sun/rptat/cmd/config"
 	"go.uber.org/zap"
 )
 
+var proxies map[string]*proxy.Proxy
+var m sync.Mutex
+
 // StartServer starts the proxy, inits all the requited submodules and routine for shutdown
 func StartServer(cfg config.Config, logger *zap.Logger) {
-	proxies := *new([]proxy.Proxy)
+	proxies = make(map[string]*proxy.Proxy)
 	hr := hostrouter.New()
 
 	for _, pxy := range cfg.ProxyConfig {
 		prox := proxy.NewProxy(&pxy, logger)
-		proxies = append(proxies, prox)
+		proxies[pxy.GetHostname()] = &prox
 		hr.Map(pxy.GetHostname(), router.NewProxyRouter(prox, logger))
 		logger.Sugar().Infof("Subscribed [%s] as [%s]", pxy.GetServeURL(), pxy.GetHostname())
 	}
@@ -42,13 +49,54 @@ func StartServer(cfg config.Config, logger *zap.Logger) {
 		}
 	}()
 
-	gracefulShutdown(proxyServer, logger, proxies)
+	c := make(chan os.Signal, 1)
+	go liveReload(proxyServer, c, logger)
+	gracefulShutdown(proxyServer, logger, c)
 }
 
-func gracefulShutdown(httpServer *http.Server, logger *zap.Logger, pxy []proxy.Proxy) {
+func liveReload(httpServer *http.Server, shutdownChan chan os.Signal, logger *zap.Logger) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGUSR1)
+	_ = ioutil.WriteFile("rptat.pid", []byte(strconv.Itoa(os.Getpid())), 420)
+	for {
+		select {
+		case <-c:
+			m.Lock()
+			hr := hostrouter.New()
+			pxyCfg := config.Load().ProxyConfig
+			oldProx := proxies
+			proxies = make(map[string]*proxy.Proxy)
+			for _, pxy := range pxyCfg {
+				prox := proxy.NewProxy(&pxy, logger)
+				proxies[pxy.GetHostname()] = &prox
+				hr.Map(pxy.GetHostname(), router.NewProxyRouter(prox, logger))
+				logger.Sugar().Infof("[liveReload] [Map] Subscribed [%s] as [%s]", pxy.GetServeURL(), pxy.GetHostname())
+			}
+
+			proxyRouter := chi.NewRouter()
+			proxyRouter.Use(middleware.Recoverer)
+			proxyRouter.Mount("/", hr)
+			httpServer.Handler = proxyRouter
+			logger.Sugar().Infof("[liveReload] Mounted new router")
+
+			for hostname, pxy := range oldProx {
+				pxy.Metrics.SyncAndShutdown()
+				logger.Sugar().Infof("[liveReload] [SyncAndShutdown] Shutdown [%s]", hostname)
+			}
+			m.Unlock()
+		case <-shutdownChan:
+			_ = os.Remove("rptat.pid")
+			shutdownChan <- os.Interrupt
+			return
+		}
+	}
+}
+
+func gracefulShutdown(httpServer *http.Server, logger *zap.Logger, shutdownChan chan os.Signal) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
+	shutdownChan <- os.Interrupt
 	logger.Info("Attempting GracefulShutdown")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -60,7 +108,9 @@ func gracefulShutdown(httpServer *http.Server, logger *zap.Logger, pxy []proxy.P
 		}
 	}()
 
-	for _, pxy := range pxy {
-		pxy.Metrics.SyncAndShutdown()
+	m.Lock()
+	for _, pxy := range proxies {
+		(*pxy).Metrics.SyncAndShutdown()
 	}
+	<-shutdownChan
 }
