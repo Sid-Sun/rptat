@@ -21,6 +21,7 @@ import (
 
 var proxies map[string]*proxy.Proxy
 var m sync.Mutex
+var pidPath string
 
 // StartServer starts the proxy, inits all the requited submodules and routine for shutdown
 func StartServer(cfg config.Config, logger *zap.Logger) {
@@ -57,7 +58,12 @@ func initHostRouter(pxyCfg []config.ProxyConfig, logger *zap.Logger) hostrouter.
 func liveReload(httpServer *http.Server, shutdownChan chan os.Signal, logger *zap.Logger) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGUSR1)
-	_ = ioutil.WriteFile("rptat.pid", []byte(strconv.Itoa(os.Getpid())), 420)
+	err := createPIDFile()
+	if err != nil {
+		logger.Sugar().Errorf("[liveReload] [createPIDFile] %v", err)
+		self, _ := os.FindProcess(os.Getpid())
+		_ = self.Signal(os.Interrupt)
+	}
 	for {
 		select {
 		case <-c:
@@ -88,7 +94,14 @@ func liveReload(httpServer *http.Server, shutdownChan chan os.Signal, logger *za
 
 			m.Unlock()
 		case <-shutdownChan:
-			_ = os.Remove("rptat.pid")
+			go func() {
+				if pidPath != "" {
+					err := os.Remove(pidPath)
+					if err != nil {
+						panic(err)
+					}
+				}
+			}()
 			shutdownChan <- os.Interrupt
 			return
 		}
@@ -116,4 +129,37 @@ func gracefulShutdown(httpServer *http.Server, logger *zap.Logger, shutdownChan 
 		(*pxy).Metrics.SyncAndShutdown()
 	}
 	<-shutdownChan
+}
+
+func createPIDFile() error {
+	mode := 480 // 110-110-000 (rw-r-----)
+	path := "/var/run/rptat"
+	err := os.MkdirAll(path, os.FileMode(mode))
+	if err != nil && !os.IsExist(err) {
+		if !os.IsPermission(err) {
+			pidPath = ""
+			return err
+		}
+		// Fallback to user's run dir.
+		path = "/var/run/user/" + strconv.Itoa(os.Getuid()) + "/rptat"
+		err = os.Mkdir(path, os.FileMode(mode))
+		if err != nil && !os.IsExist(err) {
+			pidPath = ""
+			return err
+		}
+	}
+	pidPath = path + "/rptat.pid"
+
+	info, err := os.Stat(pidPath)
+	if err == nil || info != nil {
+		pidPath = ""
+		return err
+	}
+
+	err = ioutil.WriteFile(pidPath, []byte(strconv.Itoa(os.Getpid())), os.FileMode(mode))
+	if err != nil {
+		pidPath = ""
+		return err
+	}
+	return nil
 }

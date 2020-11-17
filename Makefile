@@ -11,3 +11,6 @@ tidy:
 
 serve: fmt vet
 	env go run cmd/*.go
+
+build: fmt vet
+	cd cmd; go build -o ../out/rptat .

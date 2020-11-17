@@ -21,7 +21,7 @@ func (c Config) GetEnv() string {
 
 // Load reads all config from env to config
 func Load() (Config, error) {
-	f, err := os.Open("config.toml")
+	f, err := os.Open(os.Args[1])
 	if err != nil {
 		return Config{}, err
 	}
@@ -69,7 +69,7 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 
-	err = ioutil.WriteFile("config.toml", d, 420)
+	err = ioutil.WriteFile(os.Args[1], d, 420)
 	if err != nil {
 		return Config{}, err
 	}
