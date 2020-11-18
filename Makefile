@@ -14,3 +14,6 @@ serve: fmt vet
 
 build: fmt vet
 	cd cmd; go build -o ../out/rptat .
+
+run: build
+	./out/rptat ./config.toml
