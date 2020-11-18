@@ -18,7 +18,7 @@ func NewRouter() *chi.Mux {
 func NewProxyRouter(pxy proxy.Proxy, lgr *zap.Logger) chi.Router {
 	rtr := chi.NewRouter()
 
-	rtr.Handle("/", pxy.Handler.MetricsProxyHandler())
+	rtr.Handle("/*", pxy.Handler.MetricsProxyHandler())
 	rtr.Get("/rptat/api/getall", pxy.Authenticator.JustCheck(middlewares.WithContentJSON(handlers.
 		GetHandler(pxy.Service, pxy.Metrics, lgr))))
 
