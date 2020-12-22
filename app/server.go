@@ -111,6 +111,7 @@ func liveReload(httpServer *http.Server, shutdownChan chan os.Signal, logger *za
 func gracefulShutdown(httpServer *http.Server, logger *zap.Logger, shutdownChan chan os.Signal) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, os.Kill)
 	<-c
 	shutdownChan <- os.Interrupt
 	logger.Info("Attempting GracefulShutdown")
